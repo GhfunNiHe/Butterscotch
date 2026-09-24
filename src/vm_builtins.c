@@ -423,6 +423,7 @@ static const BuiltinVarEntry BUILTIN_VAR_TABLE[] = {
     { "path_speed", BUILTIN_VAR_PATH_SPEED },
     { "persistent", BUILTIN_VAR_PERSISTENT },
     { "pi", BUILTIN_VAR_PI },
+    { "program_directory", BUILTIN_VAR_PROGRAM_DIRECTORY },
     { "room", BUILTIN_VAR_ROOM },
     { "room_first", BUILTIN_VAR_ROOM_FIRST },
     { "room_height", BUILTIN_VAR_ROOM_HEIGHT },
@@ -613,6 +614,10 @@ RValue VMBuiltins_getVariable(VMContext* ctx, Instance* inst, int16_t builtinVar
     switch (builtinVarId) {
         // File system
         case BUILTIN_VAR_WORKING_DIRECTORY: {
+            FileSystem* fs = runner->fileSystem;
+            return RValue_makeOwnedString(fs->vtable->resolvePath(fs, ""));
+        }
+        case BUILTIN_VAR_PROGRAM_DIRECTORY: {
             FileSystem* fs = runner->fileSystem;
             return RValue_makeOwnedString(fs->vtable->resolvePath(fs, ""));
         }
@@ -8669,8 +8674,23 @@ static RValue builtin_joystick_axes(VMContext* ctx, RValue* args, MAYBE_UNUSED i
 }
 
 // Window stubs
-STUB_RETURN_ZERO(window_get_fullscreen)
-STUB_RETURN_UNDEFINED(window_set_fullscreen)
+static RValue builtin_window_get_fullscreen(VMContext* ctx, MAYBE_UNUSED RValue* args, MAYBE_UNUSED int32_t argCount) {
+    Runner* runner = ctx->runner;
+    if (runner != nullptr && runner->getFullscreen != nullptr) {
+        return RValue_makeBool(runner->getFullscreen());
+    }
+    return RValue_makeBool(false);
+}
+
+static RValue builtin_window_set_fullscreen(VMContext* ctx, RValue* args, MAYBE_UNUSED int32_t argCount) {
+    Runner* runner = ctx->runner;
+    if (runner != nullptr && runner->setFullscreen != nullptr) {
+        bool on = (argCount >= 1) ? RValue_toBool(args[0]) : true;
+        runner->setFullscreen(on);
+    }
+    return RValue_makeUndefined();
+}
+
 static RValue builtin_window_get_width(VMContext* ctx, MAYBE_UNUSED RValue* args, MAYBE_UNUSED int32_t argCount) {
     Runner* runner = ctx->runner;
     if (runner != nullptr && runner->getWindowSize != nullptr) {

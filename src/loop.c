@@ -958,6 +958,8 @@ int loop(CommandLineArgs args, const char *argv0) {
         runner->osType = args.osType;
         runner->setWindowSize = platformSetWindowSize;
         runner->getWindowSize = platformGetWindowSize;
+        runner->setFullscreen = platformSetFullscreen;
+        runner->getFullscreen = platformGetFullscreen;
         runner->setWindowTitle = platformSetWindowTitle;
         Runner_setGameArgs(runner, currentGameArgs, (int32_t) arrlen(currentGameArgs));
         platformInitFunctions(runner);

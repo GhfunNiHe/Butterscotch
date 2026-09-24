@@ -16,6 +16,7 @@
 static Runner *g_runner;
 static SDL_Surface* scr;
 static SDL_Window *window;
+static bool sFullscreen = false;
 static SDL_GameController* openControllers[MAX_GAMEPADS];
 
 static SDL_Window *tryOpenWindow(int reqW, int reqH, const char* title, Uint32 flags) {
@@ -167,6 +168,18 @@ void platformGetMousePos(double *xPos, double *yPos) {
 
 static bool platformGetWindowFocus(void) {
     return SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS;
+}
+
+void platformSetFullscreen(bool on) {
+    if (window == nullptr) return;
+    if (SDL_SetWindowFullscreen(window, on ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0) == 0) {
+        sFullscreen = on;
+        logInfo("Window fullscreen set to %s\n", on ? "true" : "false");
+    }
+}
+
+bool platformGetFullscreen(void) {
+    return sFullscreen;
 }
 
 bool platformInit(int reqW, int reqH, const char *title, bool headless) {

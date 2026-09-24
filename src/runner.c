@@ -4718,9 +4718,10 @@ char* Runner_dumpStateJson(Runner* runner) {
 
         if (entryOnTheVarStruct.key != INT_RVALUE_HASHMAP_EMPTY_KEY) {
             char* name = VM_getVariableNameByVarId(runner->vmContext, entryOnTheVarStruct.key);
-
-            JsonWriter_key(&w, name);
-            writeRValueJson(&w, target);
+            if (name != nullptr) {
+                JsonWriter_key(&w, name);
+                writeRValueJson(&w, target);
+            }
         }
     }
     }
