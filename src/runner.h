@@ -753,6 +753,8 @@ struct Runner {
     void (*setWindowSize)(int32_t width, int32_t height);
     bool (*getWindowPosition)(int32_t* outX, int32_t* outY);
     void (*setWindowPosition)(int32_t x, int32_t y);
+    void (*setFullscreen)(bool on);
+    bool (*getFullscreen)(void);
     bool (*windowHasFocus)(void);
     void (*setCursor)(int32_t cursorType);
     int32_t currentCursor;  // last value passed to window_set_cursor

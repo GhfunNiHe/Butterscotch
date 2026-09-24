@@ -14,6 +14,9 @@ static void writeCommaIfNeeded(JsonWriter* writer) {
 }
 
 static void writeEscapedString(JsonWriter* writer, const char* str) {
+    if (str == nullptr) {
+        str = "";
+    }
     StringBuilder_appendChar(&writer->out, '"');
     for (const char* p = str; *p != '\0'; p++) {
         unsigned char c = (unsigned char) *p;
