@@ -82,6 +82,19 @@ void platformSetWindowSize(int32_t width, int32_t height) {
     glfwSetWindowSize(width, height);
 }
 
+// GLFW 2.x can only open a fullscreen window up front (glfwOpenWindow with
+// GLFW_FULLSCREEN); there is no runtime window-mode switch. Reopening the
+// window here would destroy the GL context, so report the limitation instead.
+void platformSetFullscreen(bool on) {
+    if (on) {
+        logWarn("glfw2 backend does not support toggling fullscreen at runtime\n");
+    }
+}
+
+bool platformGetFullscreen(void) {
+    return false;
+}
+
 void platformGetMousePos(double *xPos, double *yPos) {
     if (!xPos || !yPos) return;
     int mx = 0, my = 0;

@@ -333,6 +333,15 @@ void platformSetWindowSize(int32_t width, int32_t height) {
     [window setFrame:newFrame display:YES animate:NO];
 }
 
+bool platformGetFullscreen(void) {
+    return window != nil && ([window styleMask] & NSWindowStyleMaskFullScreen) != 0;
+}
+
+void platformSetFullscreen(bool on) {
+    if (window == nil || on == platformGetFullscreen()) return;
+    [window toggleFullScreen:nil];
+}
+
 void platformGetMousePos(double *xPos, double *yPos) {
     NSPoint mouseLocation = [window mouseLocationOutsideOfEventStream];
     *xPos = mouseLocation.x;

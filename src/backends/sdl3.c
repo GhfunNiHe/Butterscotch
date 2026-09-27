@@ -146,6 +146,16 @@ static bool platformGetWindowFocus(void) {
     return SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS;
 }
 
+bool platformGetFullscreen(void) {
+    return window != NULL && (SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN) != 0;
+}
+
+void platformSetFullscreen(bool on) {
+    if (window == NULL || on == platformGetFullscreen()) return;
+    SDL_SetWindowFullscreen(window, on);
+    if (gfx == SOFTWARE) scr = SDL_GetWindowSurface(window);
+}
+
 bool platformInit(int reqW, int reqH, const char *title, bool headless) {
     // Init SDL
     if (!SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMEPAD)) {
