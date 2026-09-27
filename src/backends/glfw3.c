@@ -20,6 +20,8 @@
 
 static GLFWwindow *window;
 static Runner *g_runner;
+// Saved windowed geometry, restored when leaving fullscreen.
+static int windowedX, windowedY, windowedW, windowedH;
 
 // Butterscotch expects framebuffer pixels, but GLFW3 expects logical pixels.
 // We round the logical size UP (ceil) so the resulting framebuffer is never SMALLER than requested.
@@ -144,6 +146,47 @@ void platformGetMousePos(double *xPos, double *yPos) {
 
 static bool platformGetWindowFocus(void) {
     return glfwGetWindowAttrib(window, GLFW_FOCUSED) != 0;
+}
+
+bool platformGetFullscreen(void) {
+    return window != nullptr && glfwGetWindowMonitor(window) != nullptr;
+}
+
+// GLFW3 has no dedicated fullscreen toggle: a window becomes fullscreen by
+// moving it onto a monitor via glfwSetWindowMonitor(), and becomes windowed
+// again by passing a NULL monitor while restoring the saved geometry.
+void platformSetFullscreen(bool on) {
+    if (window == nullptr || on == platformGetFullscreen()) return;
+
+    if (on) {
+        glfwGetWindowPos(window, &windowedX, &windowedY);
+        glfwGetWindowSize(window, &windowedW, &windowedH);
+
+        // Pick the monitor the window currently sits on, falling back to primary.
+        GLFWmonitor* monitor = glfwGetWindowMonitor(window);
+        if (monitor == nullptr) monitor = glfwGetPrimaryMonitor();
+        int count = 0;
+        GLFWmonitor** monitors = glfwGetMonitors(&count);
+        int wx = windowedX + windowedW / 2;
+        int wy = windowedY + windowedH / 2;
+        for (int i = 0; i < count; i++) {
+            int mx = 0, my = 0;
+            glfwGetMonitorPos(monitors[i], &mx, &my);
+            const GLFWvidmode* mode = glfwGetVideoMode(monitors[i]);
+            if (mode != nullptr && wx >= mx && wx < mx + mode->width &&
+                wy >= my && wy < my + mode->height) {
+                monitor = monitors[i];
+                break;
+            }
+        }
+
+        if (monitor == nullptr) return;
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+        if (mode == nullptr) return;
+        glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+    } else {
+        glfwSetWindowMonitor(window, nullptr, windowedX, windowedY, windowedW, windowedH, GLFW_DONT_CARE);
+    }
 }
 
 static void glfwErrorCallback(int code, const char* description) {

@@ -348,16 +348,25 @@ static void platformSetWindowPosition(int32_t x, int32_t y) {
     if (!screen) {
         screen = [NSScreen mainScreen];
     }
-    
+
     CGFloat screenHeight = [screen frame].size.height;
     NSRect frame = [window frame];
     CGFloat windowHeight = frame.size.height;
-    
+
     CGFloat appKitX = (CGFloat)x;
     CGFloat appKitY = screenHeight - (CGFloat)y - windowHeight;
-    
+
     NSPoint newOrigin = NSMakePoint(appKitX, appKitY);
     [window setFrameOrigin:newOrigin];
+}
+
+bool platformGetFullscreen(void) {
+    return window != nil && ([window styleMask] & NSWindowStyleMaskFullScreen) != 0;
+}
+
+void platformSetFullscreen(bool on) {
+    if (window == nil || on == platformGetFullscreen()) return;
+    [window toggleFullScreen:nil];
 }
 
 void platformGetMousePos(double *xPos, double *yPos) {

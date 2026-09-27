@@ -55,6 +55,15 @@ void platformSetWindowTitle(const char *title) {
     (void)title;
 }
 
+// There is no window to make fullscreen in this backend.
+void platformSetFullscreen(bool on) {
+    (void)on;
+}
+
+bool platformGetFullscreen(void) {
+    return false;
+}
+
 void platformGetMousePos(double *xPos, double *yPos) {
     if (xPos) *xPos = 0.0;
     if (yPos) *yPos = 0.0;

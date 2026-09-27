@@ -222,7 +222,20 @@ void platformSetWindowSize(int32_t width, int32_t height) {
     if (width <= 0 || height <= 0) return;
     fbWidth = width;
     fbHeight = height;
-    scr = SDL_SetVideoMode(width, height, 0, (gfx == SOFTWARE ? 0 : SDL_OPENGL) | SDL_RESIZABLE);
+    scr = SDL_SetVideoMode(width, height, 0,
+        (gfx == SOFTWARE ? 0 : SDL_OPENGL) | SDL_RESIZABLE |
+        (platformGetFullscreen() ? SDL_FULLSCREEN : 0));
+}
+
+bool platformGetFullscreen(void) {
+    return scr != NULL && (scr->flags & SDL_FULLSCREEN) != 0;
+}
+
+void platformSetFullscreen(bool on) {
+    if (scr == NULL || on == platformGetFullscreen()) return;
+    SDL_Surface* newSurface = SDL_SetVideoMode(fbWidth, fbHeight, 0,
+        (gfx == SOFTWARE ? 0 : SDL_OPENGL) | SDL_RESIZABLE | (on ? SDL_FULLSCREEN : 0));
+    if (newSurface != NULL) scr = newSurface;
 }
 
 void platformGetMousePos(double *xPos, double *yPos) {

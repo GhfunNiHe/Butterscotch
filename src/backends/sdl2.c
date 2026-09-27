@@ -189,6 +189,7 @@ void platformSetFullscreen(bool on) {
     if (window == nullptr) return;
     if (SDL_SetWindowFullscreen(window, on ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0) == 0) {
         sFullscreen = on;
+        if (gfx == SOFTWARE) scr = SDL_GetWindowSurface(window);
         logInfo("Window fullscreen set to %s\n", on ? "true" : "false");
     }
 }
