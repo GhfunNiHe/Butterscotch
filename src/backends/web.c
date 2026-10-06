@@ -224,6 +224,16 @@ void platformSetWindowTitle(MAYBE_UNUSED const char *title) {
     MAIN_THREAD_EM_ASM({ postMessage({ type: 'windowTitle', title: UTF8ToString($0) }); }, title);
 }
 
+// The canvas belongs to the embedding page, which is what decides whether the element goes
+// fullscreen, so the backend has nothing of its own to toggle. The hooks still have to exist:
+// loop.c wires them into the Runner unconditionally, and wasm-ld needs the symbols.
+void platformSetFullscreen(MAYBE_UNUSED bool on) {
+}
+
+bool platformGetFullscreen(void) {
+    return false;
+}
+
 void platformGetMousePos(double *xPos, double *yPos) {
     if (xPos)
         *xPos = gMouseX;
