@@ -2200,7 +2200,12 @@ static void handleCallV(VMContext* ctx, uint32_t instr) {
 #endif
         result = RValue_makeUndefined();
     } else {
-        logWarn("VM: [%s] CALLV with unresolvable function reference (type=%d, codeIndex=%d)\n", ctx->currentCodeName, function.type, codeIndex);
+        // Report the raw operand too: for numeric callables the value is a FUNC-table index, and seeing
+        // it is the difference between "some method is broken" and knowing exactly which reference it is.
+        if (function.type == RVALUE_INT32 || function.type == RVALUE_INT64)
+            logWarn("VM: [%s] CALLV with unresolvable function reference (type=%d, codeIndex=%d, funcIndex=%lld)\n", ctx->currentCodeName, function.type, codeIndex, (longlong) RValue_toInt64(function));
+        else
+            logWarn("VM: [%s] CALLV with unresolvable function reference (type=%d, codeIndex=%d)\n", ctx->currentCodeName, function.type, codeIndex);
 #ifdef ENABLE_WAD17
         VMException* exception = (VMException *)safeCalloc(1, sizeof(VMException));
         exception->message = safeStrdup("CALLV with unresolvable function reference");
