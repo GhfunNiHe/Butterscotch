@@ -632,10 +632,6 @@ RValue VMBuiltins_getVariable(VMContext* ctx, Instance* inst, int16_t builtinVar
             FileSystem* fs = runner->fileSystem;
             return RValue_makeOwnedString(fs->vtable->resolvePath(fs, ""));
         }
-        case BUILTIN_VAR_PROGRAM_DIRECTORY: {
-            FileSystem* fs = runner->fileSystem;
-            return RValue_makeOwnedString(fs->vtable->resolvePath(fs, ""));
-        }
 
         // OS constants
         case BUILTIN_VAR_OS_TYPE:
