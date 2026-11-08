@@ -18,7 +18,7 @@
 
 static Runner *g_runner;
 
-static bool tryOpenWindow(int reqW, int reqH) {
+static bool tryOpenWindow(int reqW, int reqH, bool fullscreen) {
 #ifdef GLFW_OPENGL_VERSION_MAJOR
     if (gfx == SOFTWARE || gfx == LEGACY_GL) {
         glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR, 1);
@@ -52,7 +52,7 @@ static bool tryOpenWindow(int reqW, int reqH) {
 
     return false;
 #else
-    return glfwOpenWindow(reqW, reqH, 8, 8, 8, 8, 24, 8, GLFW_WINDOW) != 0;
+    return glfwOpenWindow(reqW, reqH, 8, 8, 8, 8, 24, 8, fullscreen ? GLFW_FULLSCREEN : GLFW_WINDOW) != 0;
 #endif
 }
 
@@ -87,19 +87,6 @@ static void platformSetWindowPosition(int32_t x, int32_t y) {
     glfwSetWindowPos(x, y);
 }
 
-// GLFW 2.x can only open a fullscreen window up front (glfwOpenWindow with
-// GLFW_FULLSCREEN); there is no runtime window-mode switch. Reopening the
-// window here would destroy the GL context, so report the limitation instead.
-void platformSetFullscreen(bool on) {
-    if (on) {
-        logWarn("glfw2 backend does not support toggling fullscreen at runtime\n");
-    }
-}
-
-bool platformGetFullscreen(void) {
-    return false;
-}
-
 void platformGetMousePos(double *xPos, double *yPos) {
     if (!xPos || !yPos) return;
     int mx = 0, my = 0;
@@ -109,8 +96,19 @@ void platformGetMousePos(double *xPos, double *yPos) {
     *yPos = (double)my;
 }
 
+static bool glfw2Fullscreen = false;
+
 static bool platformGetWindowFocus(void) {
     return glfwGetWindowParam(GLFW_ACTIVE);
+}
+
+static bool platformGetWindowFullscreen(void) {
+    return glfw2Fullscreen;
+}
+
+static void platformSetWindowFullscreen(bool fullscreen) {
+    if (fullscreen == glfw2Fullscreen) return;
+    glfw2Fullscreen = fullscreen;
 }
 
 static int32_t glfwKeyToGml(int glfwKey) {
@@ -202,7 +200,7 @@ static void GLFWCALL scrollCallback(int pos) {
     if (g_runner) RunnerMouse_onWheel(g_runner->mouse, yoffset);
 }
 
-bool platformInit(int32_t reqW, int32_t reqH, const char *title, bool headless) {
+bool platformInit(int32_t reqW, int32_t reqH, const char *title, bool headless, bool fullscreen) {
     if (headless) {
         logError("Headless mode is not supported with GLFW 2\n");
         return false;
@@ -214,8 +212,8 @@ bool platformInit(int32_t reqW, int32_t reqH, const char *title, bool headless) 
         return false;
     }
 
-    if (!tryOpenWindow(reqW, reqH)) {
-        logError("Failed to create GLFW window\n");
+    if (!tryOpenWindow(reqW, reqH, fullscreen)) {
+        fprintf(stderr, "Failed to create GLFW window\n");
         glfwTerminate();
         return false;
     }
@@ -262,7 +260,10 @@ void platformInitFunctions(Runner *runner) {
     g_runner = runner;
     runner->windowHasFocus = platformGetWindowFocus;
     runner->setCursor = platformSetCursor;
+    runner->getWindowPosition = platformGetWindowPosition;
     runner->setWindowPosition = platformSetWindowPosition;
+    runner->getWindowFullscreen = platformGetWindowFullscreen;
+    runner->setWindowFullscreen = platformSetWindowFullscreen;
     runner->currentCursor = GML_CR_DEFAULT;
 #ifdef ENABLE_SW_RENDERER
     if (gfx == SOFTWARE)

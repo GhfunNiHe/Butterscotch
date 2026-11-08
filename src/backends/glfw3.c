@@ -20,8 +20,6 @@
 
 static GLFWwindow *window;
 static Runner *g_runner;
-// Saved windowed geometry, restored when leaving fullscreen.
-static int windowedX, windowedY, windowedW, windowedH;
 
 // Butterscotch expects framebuffer pixels, but GLFW3 expects logical pixels.
 // We round the logical size UP (ceil) so the resulting framebuffer is never SMALLER than requested.
@@ -148,44 +146,22 @@ static bool platformGetWindowFocus(void) {
     return glfwGetWindowAttrib(window, GLFW_FOCUSED) != 0;
 }
 
-bool platformGetFullscreen(void) {
-    return window != nullptr && glfwGetWindowMonitor(window) != nullptr;
+static int windowedX, windowedY, windowedW, windowedH;
+
+static bool platformGetWindowFullscreen(void) {
+    return glfwGetWindowMonitor(window) != NULL;
 }
 
-// GLFW3 has no dedicated fullscreen toggle: a window becomes fullscreen by
-// moving it onto a monitor via glfwSetWindowMonitor(), and becomes windowed
-// again by passing a NULL monitor while restoring the saved geometry.
-void platformSetFullscreen(bool on) {
-    if (window == nullptr || on == platformGetFullscreen()) return;
-
-    if (on) {
+static void platformSetWindowFullscreen(bool fullscreen) {
+    if (fullscreen == platformGetWindowFullscreen()) return;
+    if (fullscreen) {
         glfwGetWindowPos(window, &windowedX, &windowedY);
         glfwGetWindowSize(window, &windowedW, &windowedH);
-
-        // Pick the monitor the window currently sits on, falling back to primary.
-        GLFWmonitor* monitor = glfwGetWindowMonitor(window);
-        if (monitor == nullptr) monitor = glfwGetPrimaryMonitor();
-        int count = 0;
-        GLFWmonitor** monitors = glfwGetMonitors(&count);
-        int wx = windowedX + windowedW / 2;
-        int wy = windowedY + windowedH / 2;
-        for (int i = 0; i < count; i++) {
-            int mx = 0, my = 0;
-            glfwGetMonitorPos(monitors[i], &mx, &my);
-            const GLFWvidmode* mode = glfwGetVideoMode(monitors[i]);
-            if (mode != nullptr && wx >= mx && wx < mx + mode->width &&
-                wy >= my && wy < my + mode->height) {
-                monitor = monitors[i];
-                break;
-            }
-        }
-
-        if (monitor == nullptr) return;
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
         const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-        if (mode == nullptr) return;
         glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
     } else {
-        glfwSetWindowMonitor(window, nullptr, windowedX, windowedY, windowedW, windowedH, GLFW_DONT_CARE);
+        glfwSetWindowMonitor(window, NULL, windowedX, windowedY, windowedW, windowedH, 0);
     }
 }
 
@@ -283,7 +259,7 @@ static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
     RunnerMouse_onWheel(g_runner->mouse, yoffset);
 }
 
-bool platformInit(int32_t reqW, int32_t reqH, const char *title, bool headless) {
+bool platformInit(int32_t reqW, int32_t reqH, const char *title, bool headless, bool fullscreen) {
     // Init GLFW
     glfwSetErrorCallback(glfwErrorCallback);
     if (!glfwInit()) {
@@ -331,6 +307,8 @@ bool platformInit(int32_t reqW, int32_t reqH, const char *title, bool headless) 
     // If we don't do this, the window will be larger than it should be if you are using Wayland fractional scaling
     // We set the window size AFTER the window creation so we can use glfwGetWindowContentScale
     platformSetWindowSize(reqW, reqH);
+
+    platformSetWindowFullscreen(fullscreen);
 
     // Set up keyboard input
     glfwSetKeyCallback(window, keyCallback);
@@ -383,6 +361,8 @@ void platformInitFunctions(Runner *runner) {
     runner->currentCursor = GML_CR_DEFAULT;
     runner->getWindowPosition = platformGetWindowPosition;
     runner->setWindowPosition = platformSetWindowPosition;
+    runner->getWindowFullscreen = platformGetWindowFullscreen;
+    runner->setWindowFullscreen = platformSetWindowFullscreen;
 #ifdef ENABLE_SW_RENDERER
     if (gfx == SOFTWARE)
         glfwSetWindowSizeCallback(window, resizeCallback);

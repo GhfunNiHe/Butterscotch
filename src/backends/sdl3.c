@@ -156,17 +156,15 @@ static bool platformGetWindowFocus(void) {
     return SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS;
 }
 
-bool platformGetFullscreen(void) {
-    return window != NULL && (SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN) != 0;
+static bool platformGetWindowFullscreen(void) {
+    return SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN;
 }
 
-void platformSetFullscreen(bool on) {
-    if (window == NULL || on == platformGetFullscreen()) return;
-    SDL_SetWindowFullscreen(window, on);
-    if (gfx == SOFTWARE) scr = SDL_GetWindowSurface(window);
+static void platformSetWindowFullscreen(bool fullscreen) {
+    SDL_SetWindowFullscreen(window, fullscreen);
 }
 
-bool platformInit(int reqW, int reqH, const char *title, bool headless) {
+bool platformInit(int reqW, int reqH, const char *title, bool headless, bool fullscreen) {
     // Init SDL
     if (!SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMEPAD)) {
         logError("Failed to initialize SDL\n");
@@ -210,6 +208,8 @@ bool platformInit(int reqW, int reqH, const char *title, bool headless) {
     } else
         scr = SDL_GetWindowSurface(window);
 
+    platformSetWindowFullscreen(fullscreen);
+
     return true;
 }
 
@@ -252,6 +252,8 @@ void platformInitFunctions(Runner *runner) {
     runner->setCursor = platformSetCursor;
     runner->getWindowPosition = platformGetWindowPosition;
     runner->setWindowPosition = platformSetWindowPosition;
+    runner->getWindowFullscreen = platformGetWindowFullscreen;
+    runner->setWindowFullscreen = platformSetWindowFullscreen;
     runner->currentCursor = GML_CR_DEFAULT;
 }
 

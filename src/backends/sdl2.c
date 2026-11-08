@@ -16,7 +16,6 @@
 static Runner *g_runner;
 static SDL_Surface* scr;
 static SDL_Window *window;
-static bool sFullscreen = false;
 static SDL_GameController* openControllers[MAX_GAMEPADS];
 
 static SDL_Window *tryOpenWindow(int reqW, int reqH, const char* title, Uint32 flags) {
@@ -136,7 +135,7 @@ bool platformGetScaledWindowSize(int32_t* outW, int32_t* outH) {
 static float platformGetWindowScale(void) {
     int32_t draw_w = 0, draw_h = 0;
     int logical_w, logical_h;
-    platformGetWindowSize(&draw_w, &draw_h);
+    if (!platformGetWindowSize(&draw_w, &draw_h)) return 1.0f;
     SDL_GetWindowSize(window, &logical_w, &logical_h);
     return (logical_h > 0) ? (float)draw_h / logical_h : 1.0f;
 }
@@ -185,20 +184,15 @@ static bool platformGetWindowFocus(void) {
     return SDL_GetWindowFlags(window) & SDL_WINDOW_INPUT_FOCUS;
 }
 
-void platformSetFullscreen(bool on) {
-    if (window == nullptr) return;
-    if (SDL_SetWindowFullscreen(window, on ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0) == 0) {
-        sFullscreen = on;
-        if (gfx == SOFTWARE) scr = SDL_GetWindowSurface(window);
-        logInfo("Window fullscreen set to %s\n", on ? "true" : "false");
-    }
+static bool platformGetWindowFullscreen(void) {
+    return SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN_DESKTOP;
 }
 
-bool platformGetFullscreen(void) {
-    return sFullscreen;
+static void platformSetWindowFullscreen(bool fullscreen) {
+    SDL_SetWindowFullscreen(window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 }
 
-bool platformInit(int reqW, int reqH, const char *title, bool headless) {
+bool platformInit(int reqW, int reqH, const char *title, bool headless, bool fullscreen) {
     // Init SDL
     if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_GAMECONTROLLER)) {
         logError("Failed to initialize SDL\n");
@@ -254,6 +248,9 @@ bool platformInit(int reqW, int reqH, const char *title, bool headless) {
     } else {
         scr = SDL_GetWindowSurface(window);
     }
+
+    platformSetWindowFullscreen(fullscreen);
+
     // If we don't do this, the window will be larger than it should be on HiDPI displays.
     platformSetWindowSize(reqW, reqH);
 
@@ -315,6 +312,8 @@ void platformInitFunctions(Runner *runner) {
     runner->setCursor = platformSetCursor;
     runner->getWindowPosition = platformGetWindowPosition;
     runner->setWindowPosition = platformSetWindowPosition;
+    runner->getWindowFullscreen = platformGetWindowFullscreen;
+    runner->setWindowFullscreen = platformSetWindowFullscreen;
     runner->currentCursor = GML_CR_DEFAULT;
 }
 

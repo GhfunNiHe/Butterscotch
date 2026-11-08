@@ -136,9 +136,10 @@ typedef struct {
     enum GlTextureFormat glTextureFormat;
     enum GlSurfaceFormat glSurfaceFormat;
 #endif
+    bool fullscreen;
 } CommandLineArgs;
 
-bool platformInit(int32_t reqW, int32_t reqH, const char *title, bool headless);
+bool platformInit(int32_t reqW, int32_t reqH, const char *title, bool headless, bool fullscreen);
 void platformInitFunctions(Runner *);
 void platformExit(void);
 void platformSwapBuffers(void);
@@ -148,8 +149,6 @@ void platformGetMousePos(double *xPos, double *yPos);
 bool platformGetWindowSize(int32_t* outW, int32_t* outH);
 bool platformGetScaledWindowSize(int32_t* outW, int32_t* outH);
 void platformSetWindowSize(int32_t width, int32_t height);
-void platformSetFullscreen(bool on);
-bool platformGetFullscreen(void);
 void platformSetWindowTitle(const char* title);
 void platformSleepUntil(uint64_t time);
 
